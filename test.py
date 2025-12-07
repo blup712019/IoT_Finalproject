@@ -1,3 +1,0 @@
-import clocker
-
-clocker.test()
