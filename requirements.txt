@@ -1,2 +1,6 @@
 google-adk
 python-dotenv
+gTTS
+SpeechRecognition 
+vosk
+PyAudio

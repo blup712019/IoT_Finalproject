@@ -1,0 +1,6 @@
+Metadata-Version: 2.4
+Name: my_mcp_server
+Version: 0.1.4
+Summary: A MCP server sample
+Author-email: Your Name <your@email.com>
+Requires-Dist: mcp-server
