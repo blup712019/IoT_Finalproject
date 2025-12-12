@@ -1,0 +1,17 @@
+# ===== Python Virtual Environment =====
+venv/
+.env/
+.envrc/
+
+# ===== Python cache =====
+__pycache__/
+*.py[cod]
+
+# ===== VS Code / IDE =====
+.vscode/
+.idea/
+
+# ===== OS files =====
+.DS_Store
+Thumbs.db
+
