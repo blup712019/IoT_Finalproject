@@ -75,7 +75,7 @@ class TimerThread(threading.Thread):
 
             # 到時間了
             print("call ring manager")
-            self.ring_manager.ring(10)
+            self.ring_manager.ring(600)
             
             # 移除第一個
             times.pop(0)
