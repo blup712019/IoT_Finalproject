@@ -6,6 +6,9 @@ from pathlib import Path
 from zoneinfo import ZoneInfo  # Python 3.9+
 
 from google.adk.agents import Agent   # 有的範例是 from google.adk.agents.llm_agent import Agent
+
+json_change = False
+
 BASE_DIR = Path(__file__).resolve().parent.parent   # 專案根目錄
 TIME_FILE = BASE_DIR / "timelist.json"     
 
@@ -51,7 +54,7 @@ def add_alarm_time(alarm_time: str) -> dict:
         }
 
     print(f"[tool] add_alarm_time 被呼叫，新增鬧鐘：{alarm_time}")
-
+    json_change = True
     return {
         "status": "success",
         "message": f"已新增鬧鐘時間 {alarm_time}",
@@ -192,6 +195,6 @@ root_agent = Agent(
     ),
     tools=[get_current_time,add_alarm_time,    
            delete_alarms_in_datetime_range,
-           
+
            ],  # ⬅ 把新 function 加進來
 )

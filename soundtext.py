@@ -15,7 +15,7 @@ import pyaudio
 import speech_recognition as sr
 from vosk import Model, KaldiRecognizer
 
-
+#輸入字串 然後會撥放
 def speak(text: str, lang: str = "zh-TW") -> None:
     text = (text or "").strip()
     if not text:
