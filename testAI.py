@@ -31,6 +31,7 @@ if __name__ == "__main__":
             # 主程式照樣做其他事情
             qu = input("A:")
             ans = call_agent(qu)
+            print(ans)
             print("主程式執行中...")
             time.sleep(1)
 
