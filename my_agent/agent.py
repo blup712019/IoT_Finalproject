@@ -1,4 +1,5 @@
 # my_agent/agent.py
+import re
 import datetime
 import json
 from pathlib import Path
@@ -70,6 +71,97 @@ def get_current_time() -> dict:
         "current_time": time_str,
     }
 
+def _parse_dt(dt_str: str) -> datetime.datetime:
+    """
+    解析 "YYYY-MM-DD HH:MM:SS" 成 Asia/Taipei 時區的 aware datetime
+    """
+    dt_str = (dt_str or "").strip()
+    dt = datetime.datetime.strptime(dt_str, "%Y-%m-%d %H:%M:%S")
+    return dt.replace(tzinfo=ZoneInfo("Asia/Taipei"))
+
+
+def delete_alarms_in_datetime_range(start_dt: str, end_dt: str) -> dict:
+    """
+    刪除 timelist.json 中落在 [start_dt, end_dt] 區間內的鬧鐘（含邊界）。
+
+    參數:
+        start_dt (str): 起始時間，格式 "YYYY-MM-DD HH:MM:SS"
+        end_dt   (str): 結束時間，格式 "YYYY-MM-DD HH:MM:SS"
+
+    timelist.json 格式:
+    {
+      "alarms": ["2025-12-12 19:10:16", ...]
+    }
+
+    回傳:
+    {
+      "status": "success"/"error",
+      "deleted": [...],
+      "remaining_count": int,
+      "message": str
+    }
+    """
+    # 解析輸入時間
+    try:
+        start = _parse_dt(start_dt)
+        end = _parse_dt(end_dt)
+    except Exception as ex:
+        return {"status": "error", "message": f"時間格式錯誤，請用 YYYY-MM-DD HH:MM:SS。({ex})"}
+
+    if end < start:
+        return {"status": "error", "message": "end_dt 不能早於 start_dt。"}
+
+    # 讀檔
+    if not TIME_FILE.exists():
+        data = {"alarms": []}
+    else:
+        try:
+            with TIME_FILE.open("r", encoding="utf-8") as f:
+                data = json.load(f)
+            if not isinstance(data, dict):
+                data = {"alarms": []}
+        except Exception as ex:
+            return {"status": "error", "message": f"讀取 timelist.json 失敗: {ex}"}
+
+    alarms = data.setdefault("alarms", [])
+    if not isinstance(alarms, list):
+        alarms = []
+        data["alarms"] = alarms
+
+    deleted = []
+    kept = []
+
+    for a in alarms:
+        try:
+            a_dt = _parse_dt(str(a))
+        except Exception:
+            # 格式不合法的先保留，避免誤刪
+            kept.append(a)
+            continue
+
+        if start <= a_dt <= end:
+            deleted.append(a)
+        else:
+            kept.append(a)
+
+    data["alarms"] = kept
+
+    # 寫回
+    try:
+        with TIME_FILE.open("w", encoding="utf-8") as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+    except Exception as ex:
+        return {"status": "error", "message": f"寫入 timelist.json 失敗: {ex}"}
+
+    print(f"[tool] delete_alarms_in_datetime_range: {start_dt}~{end_dt}，刪除 {len(deleted)} 筆")
+
+    return {
+        "status": "success",
+        "deleted": deleted,
+        "remaining_count": len(kept),
+        "message": f"已刪除 {len(deleted)} 筆鬧鐘（{start_dt} ~ {end_dt}）",
+    }
+
 root_agent = Agent(
     name="time_agent",
     model="gemini-2.5-flash",  # 或你用的其他 Gemini 模型
@@ -88,10 +180,16 @@ root_agent = Agent(
         "現在是 10:00，使用者說「一個小時後」，\n"
         "你要傳入 alarm_time=\"11:00\"。\n"
         "\n"
+        "當使用者說要刪除某時間區段的鬧鐘，例如「刪除 7:00 到 9:00 的鬧鐘」，\n"
+        "請呼叫 delete_alarms_in_range(start_time, end_time)。\n"
+        "start_time/end_time 一律使用 HH:MM 格式。\n"
+        "當使用者說要刪除某時間區段的鬧鐘，例如「刪除 2025-12-12 18:00:00 到 2025-12-12 20:00:00」，"
+        "請呼叫 delete_alarms_in_datetime_range(start_dt, end_dt)。"
+        "start_dt/end_dt 一律使用 YYYY-MM-DD HH:MM:SS 格式（台北時間 Asia/Taipei）。"
         "回答請使用繁體中文。"
     ),
     tools=[get_current_time,add_alarm_time,    
-           
+           delete_alarms_in_datetime_range,
            
            ],  # ⬅ 把新 function 加進來
 )

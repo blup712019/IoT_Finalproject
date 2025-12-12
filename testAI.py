@@ -25,10 +25,12 @@ if __name__ == "__main__":
         input_device_index=0,  # 若抓錯麥克風，可指定
     )
     # 啟動背景監聽（非阻塞）
-    st.start(on_paragraph)
+    #st.start(on_paragraph)
     try:
         while True:
             # 主程式照樣做其他事情
+            qu = input("A:")
+            ans = call_agent(qu)
             print("主程式執行中...")
             time.sleep(1)
 
