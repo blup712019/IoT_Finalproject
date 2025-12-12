@@ -2,13 +2,14 @@
 from dotenv import load_dotenv
 from pathlib import Path
 import asyncio
-
+import re
 from google.adk.runners import InMemoryRunner
 from google.genai import types
-
+from google.adk.models.google_llm import _ResourceExhaustedError
+import time
 from my_agent.agent import root_agent
 
-
+_session = None
 # 讀取 my_agent/.env
 env_path = Path(__file__).parent / "my_agent" / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
@@ -54,14 +55,26 @@ def create_session():
 
 
 def call_my_agent(session_id: str, user_text: str) -> str:
-    """
-    對外暴露的同步函式：
-    - 給一個 session_id
-    - 給一段文字
-    - 回傳 AI 的文字回應
-    """
-    return asyncio.run(_ask_my_agent(session_id, user_text))
+    for _ in range(3):  # 最多重試 3 次
+        try:
+            return asyncio.run(_ask_my_agent(session_id, user_text))
+        except _ResourceExhaustedError as e:
+            # 從錯誤訊息抓 retryDelay（例如 "Please retry in 13.43s." 或 "retryDelay': '13s'")
+            msg = str(e)
+            m = re.search(r"retry in ([0-9]+(\.[0-9]+)?)s", msg)
+            if not m:
+                m = re.search(r"retryDelay['\"]:\s*'(\d+)s'", msg)
+
+            wait_sec = float(m.group(1)) if m else 15.0
+            time.sleep(wait_sec + 0.5)  # 多等一點保險
+            continue
+        except Exception as e:
+            return f"AI 呼叫失敗：{e}"
+
+    return "我現在太多人使用了（配額限制），請稍後再試一次。"
 
 def call_agent(user_text: str):
-    session = create_session()
-    return call_my_agent(session_id=session.id, user_text=user_text)
+    global _session
+    if _session is None:
+        _session = create_session()
+    return call_my_agent(session_id=_session.id, user_text=user_text)
