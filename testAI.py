@@ -2,6 +2,7 @@
 from ai_client import call_agent
 from soundtext import speak
 import time
+# import winsound
 from soundtext import SoundText
 from pathlib import Path
 
@@ -14,6 +15,7 @@ def on_paragraph(text: str): # 之後要改成ubunto適用的
     answer = call_agent(text)
     speak(answer)
     
+    # winsound.MessageBeep(winsound.MB_OK)
 
 if __name__ == "__main__":
     st = SoundText(
@@ -21,7 +23,7 @@ if __name__ == "__main__":
         hotword="hello",
         google_lang="zh-TW",
         phrase_time_limit=None,  # 用靜音判斷段落結束（像 Google 輸入）
-        input_device_index=0,  # 若抓錯麥克風，可指定
+        input_device_index=32,  # 若抓錯麥克風，可指定
     )
     # 啟動背景監聽（非阻塞）
     st.start(on_paragraph)
