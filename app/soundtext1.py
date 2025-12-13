@@ -5,19 +5,18 @@ import tempfile
 from pathlib import Path
 from gtts import gTTS
 
+import queue
+import traceback
 import json
 import threading
 import time
-import queue
-import traceback
 from typing import Callable, Optional
 
 import pyaudio
 import speech_recognition as sr
 from vosk import Model, KaldiRecognizer
 
-
-# 輸入字串然後會播放
+#輸入字串 然後會撥放
 def speak(text: str, lang: str = "zh-TW") -> None:
     text = (text or "").strip()
     if not text:
@@ -32,30 +31,29 @@ def speak(text: str, lang: str = "zh-TW") -> None:
 
         system = platform.system().lower()
         if system == "windows":
-            # Windows 預設播放器（非阻塞）
+            # 用 Windows 預設播放器開啟 mp3（會立即返回，不會阻塞）
             os.startfile(str(tmp_path))
         else:
-            # Linux 用 mpv（會阻塞到播完）
             subprocess.run(["mpv", "--no-video", str(tmp_path)], check=False)
     finally:
-        # Windows startfile 可能還在用檔案，先不刪
+        # Windows 用 startfile 播放時檔案可能還在被使用，先不立刻刪
         if platform.system().lower() != "windows":
             try:
                 tmp_path.unlink(missing_ok=True)
             except Exception:
                 pass
-
+#以下是speech to text
 
 class SoundText:
     """
+    Ubuntu / Linux 可用的語音模組（介面與 Windows 版相同）：
+
     功能流程：
     1) 背景用 Vosk + PyAudio 持續監聽 hotword
     2) 聽到 hotword 後：
        - 先暫時關閉 Vosk 的麥克風串流（避免裝置被佔用）
        - 使用 SpeechRecognition + Google 做「段落式語音輸入」
-    3) 段落文字透過 callback 回傳
-       ★ callback 會由 SoundText 自己的 callback worker thread 執行
-         （避免卡住錄音/監聽 thread）
+    3) 將段落文字（string）透過 callback 回傳
     4) 重新打開 Vosk 串流，回到 hotword 監聽
     """
 
@@ -65,11 +63,11 @@ class SoundText:
         hotword: str = "hello",
         sample_rate: int = 16000,
         frames_per_buffer: int = 4000,
-        hotword_cooldown_sec: float = 1.5,
+        hotword_cooldown_sec: float = 1.5,    # hotword 冷卻時間（避免重複觸發）
         google_lang: str = "zh-TW",
-        paragraph_timeout_sec: float = 6.0,
-        phrase_time_limit: Optional[float] = None,
-        input_device_index: Optional[int] = None,
+        paragraph_timeout_sec: float = 6.0,   # 等待使用者開始說話的時間
+        phrase_time_limit: Optional[float] = None,  # None = 靜音判斷段落結束（像 Google 輸入）
+        input_device_index: Optional[int] = None,   # 指定麥克風裝置（不指定就用預設）
     ):
         # === 基本設定 ===
         self.hotword = hotword.lower().strip()
@@ -88,6 +86,7 @@ class SoundText:
 
         # === SpeechRecognition（Google 段落輸入）===
         self._sr = sr.Recognizer()
+        # 影響「停多久算一句結束」的體感（可依需求調整）
         self._sr.pause_threshold = 0.8
         self._sr.non_speaking_duration = 0.3
 
@@ -98,72 +97,38 @@ class SoundText:
 
         # === 執行緒與狀態 ===
         self._stop_evt = threading.Event()
-        self._thread: Optional[threading.Thread] = None  # hotword loop thread
+        self._thread: Optional[threading.Thread] = None
         self._on_text: Optional[Callable[[str], None]] = None
 
         self._last_fire = 0.0
         self._state_lock = threading.Lock()
         self._state = "IDLE"  # IDLE / PARAGRAPH
-
-        # === callback 派送：讓外部 callback 不會卡住錄音 thread ===
-        self._cb_q: "queue.Queue[str]" = queue.Queue()
-        self._cb_thread: Optional[threading.Thread] = None
+        
 
     # ===================== 對外 API =====================
 
     def start(self, on_text: Callable[[str], None]) -> None:
-        """啟動背景 hotword 監聽（非阻塞）。"""
+        """啟動背景 hotword 監聽（非阻塞），呼叫後主程式會立刻繼續跑。"""
         if self._thread and self._thread.is_alive():
             return
 
         self._on_text = on_text
         self._stop_evt.clear()
 
-        # 先開音訊
         with self._audio_lock:
             self._ensure_audio_open()
 
-        # 啟動 callback worker（只啟動一次）
-        if self._cb_thread is None or not self._cb_thread.is_alive():
-            self._cb_thread = threading.Thread(target=self._callback_loop, daemon=True)
-            self._cb_thread.start()
-
-        # 啟動 hotword loop
         self._thread = threading.Thread(target=self._hotword_loop, daemon=True)
         self._thread.start()
 
     def stop(self) -> None:
         """停止背景監聽並釋放音訊資源。"""
         self._stop_evt.set()
-
         if self._thread:
             self._thread.join(timeout=1.5)
-        if self._cb_thread:
-            self._cb_thread.join(timeout=1.0)
 
         with self._audio_lock:
             self._close_audio()
-
-    # ===================== callback worker =====================
-
-    def _callback_loop(self) -> None:
-        """專門執行外部 on_text 的 worker thread，避免卡住錄音 thread。"""
-        while not self._stop_evt.is_set():
-            try:
-                text = self._cb_q.get(timeout=0.2)
-            except Exception:
-                continue
-
-            try:
-                if self._on_text:
-                    self._on_text(text)  # 外部自訂做什麼都行
-            except Exception:
-                traceback.print_exc()
-            finally:
-                try:
-                    self._cb_q.task_done()
-                except Exception:
-                    pass
 
     # ===================== 狀態管理 =====================
 
@@ -247,6 +212,7 @@ class SoundText:
                     continue
 
                 now = time.time()
+                
                 if self.hotword in normalized and (now - self._last_fire) >= self.hotword_cooldown_sec:
                     print("成功開啟助理")
                     self._last_fire = now
@@ -256,13 +222,13 @@ class SoundText:
     # ===================== 段落式語音輸入（Google） =====================
 
     def _do_paragraph_capture(self) -> None:
-        """觸發後擷取一整段話，並把文字丟給 callback worker。"""
+        """觸發後擷取一整段話，並回傳 string。"""
         if self._get_state() != "IDLE":
             return
 
         self._set_state("PARAGRAPH")
 
-        # 避免音訊裝置被占用，先關閉 Vosk 串流
+        # 為了避免音訊裝置被占用，先關閉 Vosk 這邊的串流
         with self._audio_lock:
             self._close_audio()
 
@@ -290,6 +256,5 @@ class SoundText:
                 self._ensure_audio_open()
             self._set_state("IDLE")
 
-        # ★ 不要在錄音 thread 直接跑 callback，改丟進 queue
         if paragraph and self._on_text:
-            self._cb_q.put(paragraph)
+            self._on_text(paragraph)
