@@ -32,7 +32,6 @@ json_checker = JSONCheckerThread(json_path, timer_ctrl, global_stop, interval=1.
 json_checker.start()
 
 def main():
-    start_timer()
 
     try:
         while True:
@@ -51,7 +50,6 @@ def main():
         print("END")
 
     finally:
-        kill_timer()
         buzzer.cleanup()
         print("[MAIN] exit")
 
