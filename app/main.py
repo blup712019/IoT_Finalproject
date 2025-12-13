@@ -5,6 +5,8 @@ import app.buzzer as buzzer
 # import testjs
 import my_agent.agent as agent
 
+from app.timercontroller import TimerController
+from app.jsonlisten import JSONCheckerThread
 from app.timerthread import TimerThread
 from app.ringmanager import RingManager
 from app.buttonthread import ButtonThread
@@ -36,11 +38,15 @@ def main():
     try:
         while True:
             cmd = input("q=quit, r=restart: ").strip()
+
+            # if cmd == "m":
+            # agent.add_alarm_time("2025-12-13 20:30:00")
+            
             if cmd == "r":
                 timer_ctrl.restart()
             elif cmd == "q":
                 break
-
+            
             # if  agent.json_change:
             #     print("[MAIN] reload alarms")
             #     restart_timer()
