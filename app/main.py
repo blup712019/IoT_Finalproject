@@ -51,12 +51,15 @@ def kill_timer():
     print("[MAIN] timer stopped")
 
 def restart_timer():
-    print("resttttttart")
     kill_timer()
     start_timer()
 
 def main():
     start_timer()
+
+
+
+
 
     try:
         while True:
@@ -70,6 +73,7 @@ def main():
             if  agent.json_change:
                 print("[MAIN] reload alarms")
                 restart_timer()
+
                 agent.json_change = False
 
             # time.sleep(3)
