@@ -16,6 +16,7 @@ def on_paragraph(text: str): # 之後要改成ubunto適用的
     answer = call_agent(text)
     speak(answer)
     
+    
     # winsound.MessageBeep(winsound.MB_OK)
 
 if __name__ == "__main__":
@@ -32,8 +33,8 @@ if __name__ == "__main__":
         while True:
             # 主程式照樣做其他事情
             print("主程式執行中...")
-            qu = call_agent("現在幾點")
-            speak(qu)
+            # qu = call_agent("現在幾點")
+            # speak(qu)
             time.sleep(15)
 
     except KeyboardInterrupt:

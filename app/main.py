@@ -22,64 +22,30 @@ ring_manager.start()
 button_thread = ButtonThread(BUTTON_PIN, ring_manager, global_stop)
 button_thread.start()
 
+# TimerController
+timer_ctrl = TimerController(TimerThread, ring_manager)
+timer_ctrl.start()
 
-
-def start_timer():
-    global timer_thread, timer_stop_event
-
-    print("timer start")
-    # 避免重複啟動
-    if timer_thread and timer_thread.is_alive():
-        print("[MAIN] timer already running")
-        return
-    timer_stop_event = threading.Event()
-    timer_thread = TimerThread(timer_stop_event, ring_manager)
-    timer_thread.start()
-    print("[MAIN] timer started")
-
-
-def kill_timer():
-    global timer_thread, timer_stop_event
-
-    if not timer_thread:
-        return
-    print("[MAIN] stopping timer...")
-    timer_stop_event.set()      # 通知 thread 結束
-    timer_thread.join()         # 等它收尾
-    timer_thread = None
-    timer_stop_event = None
-    print("[MAIN] timer stopped")
-
-def restart_timer():
-    kill_timer()
-    start_timer()
+# JSONChecker
+json_path = "timelist.json"
+json_checker = JSONCheckerThread(json_path, timer_ctrl, global_stop, interval=1.0)
+json_checker.start()
 
 def main():
     start_timer()
 
-
-
-
-
     try:
         while True:
-            # cmd = input("cmd (r=reload, q=quit): ").strip()
-            # if cmd == "r":
+            cmd = input("q=quit, r=restart: ").strip()
+            if cmd == "r":
+                timer_ctrl.restart()
+            elif cmd == "q":
+                break
+
+            # if  agent.json_change:
             #     print("[MAIN] reload alarms")
             #     restart_timer()
-            # elif cmd == "q":
-            #     break
-
-            if  agent.json_change:
-                print("[MAIN] reload alarms")
-                restart_timer()
-
-                agent.json_change = False
-
-            # time.sleep(3)
-            # agent.add_alarm_time("2025-12-13 16:20:00")
-            
-            
+            #     agent.json_change = False
 
     except KeyboardInterrupt:
         print("END")
