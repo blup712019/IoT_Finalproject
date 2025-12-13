@@ -8,10 +8,11 @@ from google.genai import types
 from google.adk.models.google_llm import _ResourceExhaustedError
 import time
 from my_agent.agent import root_agent
-
+from dotenv import load_dotenv
 _session = None
 # 讀取 my_agent/.env
-env_path = Path(__file__).parent / "my_agent" / ".env"
+PROJECT_ROOT = Path(__file__).resolve().parents[1]   # .../你的專案根目錄
+env_path = PROJECT_ROOT / "my_agent" / ".env"
 load_dotenv(dotenv_path=env_path, override=True)
 
 # 建立 InMemoryRunner（整個程式共用一個）

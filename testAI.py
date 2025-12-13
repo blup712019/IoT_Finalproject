@@ -1,17 +1,18 @@
 # main.py
-from ai_client import call_agent
-from soundtext import speak
+from app.ai_client import call_agent
+from app.soundtext import speak
 import time
 # import winsound
-from soundtext import SoundText
+from app.soundtext import SoundText
 from pathlib import Path
+PROJECT_ROOT = Path(__file__).resolve().parent
 
 def on_paragraph(text: str): # 之後要改成ubunto適用的
     """
     當使用者說完一整段話後，這個函式會被呼叫
     text 參數就是完整的語音文字（string）
     """
-    print(f"\n📝 使用者說的段落：{text}\n")
+    print(f"\n!!!!!!使用者說的段落：{text}\n")
     answer = call_agent(text)
     speak(answer)
     
@@ -19,19 +20,21 @@ def on_paragraph(text: str): # 之後要改成ubunto適用的
 
 if __name__ == "__main__":
     st = SoundText(
-        vosk_model_path = str(Path(__file__).parent / "vosk-model-small-en-us-0.15"),
+        vosk_model_path=str(PROJECT_ROOT / "vosk-model-small-en-us-0.15"),
         hotword="hello",
         google_lang="zh-TW",
         phrase_time_limit=None,  # 用靜音判斷段落結束（像 Google 輸入）
-        input_device_index=32,  # 若抓錯麥克風，可指定
+        input_device_index=0,  # 若抓錯麥克風，可指定
     )
     # 啟動背景監聽（非阻塞）
-    st.start(on_paragraph)
+    #st.start(on_paragraph)
     try:
         while True:
             # 主程式照樣做其他事情
             print("主程式執行中...")
-            time.sleep(1)
+            qu = call_agent("現在幾點")
+            speak(qu)
+            time.sleep(15)
 
     except KeyboardInterrupt:
         st.stop()
