@@ -24,7 +24,7 @@ if __name__ == "__main__":
         hotword="hello",
         google_lang="zh-TW",
         phrase_time_limit=None,  # 用靜音判斷段落結束（像 Google 輸入）
-        input_device_index=0,  # 若抓錯麥克風，可指定
+        input_device_index=2,  # 若抓錯麥克風，可指定
     )
     # 啟動背景監聽（非阻塞）
     #st.start(on_paragraph)

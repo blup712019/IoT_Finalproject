@@ -2,8 +2,8 @@ import threading
 import time
 import app.buzzer as buzzer
 
-
-from my_agent.agent import json_change 
+# import testjs
+import my_agent.agent as agent
 
 from app.timerthread import TimerThread
 from app.ringmanager import RingManager
@@ -21,6 +21,8 @@ ring_manager.start()
 
 button_thread = ButtonThread(BUTTON_PIN, ring_manager, global_stop)
 button_thread.start()
+
+
 
 def start_timer():
     global timer_thread, timer_stop_event
@@ -49,11 +51,13 @@ def kill_timer():
     print("[MAIN] timer stopped")
 
 def restart_timer():
+    print("resttttttart")
     kill_timer()
     start_timer()
 
 def main():
     start_timer()
+
     try:
         while True:
             # cmd = input("cmd (r=reload, q=quit): ").strip()
@@ -62,10 +66,16 @@ def main():
             #     restart_timer()
             # elif cmd == "q":
             #     break
-            if json_change:
+
+            if  agent.json_change:
                 print("[MAIN] reload alarms")
                 restart_timer()
-                json_change = False
+                agent.json_change = False
+
+            # time.sleep(3)
+            # agent.add_alarm_time("2025-12-13 16:20:00")
+            
+            
 
     except KeyboardInterrupt:
         print("END")

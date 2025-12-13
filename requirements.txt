@@ -4,3 +4,4 @@ gTTS
 SpeechRecognition 
 vosk
 PyAudio
+rpi-lgpio

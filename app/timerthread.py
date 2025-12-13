@@ -4,7 +4,7 @@ import time
 from datetime import datetime
 from app.ringmanager import RingManager
 
-JSON_FILE = "data/timelist.json"
+JSON_FILE = "timelist.json"
 FMT = "%Y-%m-%d %H:%M:%S"
 def load_times_as_seconds():
     now = time.time()
@@ -82,5 +82,6 @@ class TimerThread(threading.Thread):
             remove_time_from_json(next_ts)
 
         print("[TIMER] end")
+        
 
 
