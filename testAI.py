@@ -14,8 +14,9 @@ def on_paragraph(text: str): # 之後要改成ubunto適用的
     """
     print(f"\n!!!!!!使用者說的段落：{text}\n")
     answer = call_agent(text)
+    print(answer)
     speak(answer)
-    
+    # speak("測試")
     
     # winsound.MessageBeep(winsound.MB_OK)
 
@@ -29,6 +30,7 @@ if __name__ == "__main__":
     )
     # 啟動背景監聽（非阻塞）
     st.start(on_paragraph)
+    
     try:
         while True:
             # 主程式照樣做其他事情
