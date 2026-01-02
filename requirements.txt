@@ -5,3 +5,10 @@ SpeechRecognition
 vosk
 PyAudio
 rpi-lgpio
+gpiozero
+numpy<2.0.0
+setproctitle
+opencv-python
+pytest
+pytest-timeout
+pytest-mock

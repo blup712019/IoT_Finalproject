@@ -1,5 +1,6 @@
 import threading
 import time
+import RPi.GPIO as GPIO
 import app.buzzer as buzzer
 
 # import testjs
@@ -20,6 +21,24 @@ from app.timerthread import TimerThread
 from app.ringmanager import RingManager
 from app.buttonthread import ButtonThread
 
+
+BUZZER_FREQ = 2000  # Hz
+buzzer.BUZZER_FREQ = 2000
+BUZZER_PIN = 36     # BOARD 編號
+BUTTON_PIN = 15
+buzzer.BUZZER_DUTY = 80
+GPIO.setmode(GPIO.BOARD)
+GPIO.setup(BUZZER_PIN, GPIO.OUT) #buzzer
+GPIO.setup(BUTTON_PIN, GPIO.IN, pull_up_down=GPIO.PUD_UP) #button
+buzzer._buzzer_pwm = GPIO.PWM(BUZZER_PIN, BUZZER_FREQ)
+def GPIOcleanup():
+    try:
+        buzzer.buzzer_pff()
+    except:
+        pass
+    GPIO.cleanup()
+
+
 def on_paragraph(text: str): # 之後要改成ubunto適用的
     """
     當使用者說完一整段話後，這個函式會被呼叫
@@ -36,13 +55,12 @@ st = SoundText(
     hotword="hello",
     google_lang="zh-TW",
     phrase_time_limit=None,  # 用靜音判斷段落結束（像 Google 輸入）
-    input_device_index=2,  # 若抓錯麥克風，可指定
+    input_device_index=0,  # 若抓錯麥克風，可指定
 )
     # 啟動背景監聽（非阻塞）
 
 
 
-BUTTON_PIN = 15
 #threads
 global_stop = threading.Event()
 
@@ -87,7 +105,7 @@ def main():
         print("END")
 
     finally:
-        buzzer.cleanup()
+        GPIOcleanup()
         print("[MAIN] exit")
 
 if __name__ == "__main__":

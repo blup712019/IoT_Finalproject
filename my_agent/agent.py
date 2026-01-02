@@ -18,7 +18,7 @@ def add_alarm_time(alarm_time: str) -> dict:
     新增一筆鬧鐘時間到 timelist.json。
 
     參數:
-        alarm_time (str): 鬧鐘時間字串，例如 "07:30" 或 "2025-12-10 07:30:00"。
+        alarm_time (str): 鬧鐘時間字串，例如 "2025-12-10 07:30:00"。
 
     timelist.json 格式範例:
     {

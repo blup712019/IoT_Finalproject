@@ -11,8 +11,6 @@ class ButtonThread(threading.Thread):
         self.stop_event = stop_event
         self.debounce_sec = debounce_sec
 
-        # 只 setup，不 setmode（避免跟 buzzer.py 衝突）
-        GPIO.setup(self.button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
     def run(self):
         print("[BUTTON] listener started")
