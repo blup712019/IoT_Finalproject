@@ -65,10 +65,13 @@ def remove_time_from_json(ts):
 
 
 class TimerThread(threading.Thread):
-    def __init__(self, stop_event: threading.Event, ring_manager=None):
+    def __init__(self, stop_event: threading.Event
+    , dect_start: threading.Event
+    , ring_manager=None):
         super().__init__()
         self.stop_event = stop_event
         self.ring_manager = ring_manager
+        self.dect_start = dect_start
 
     def pre_action(self, ts):
         # 車車 thread
@@ -97,7 +100,8 @@ class TimerThread(threading.Thread):
             # 到時間了，依狀態決定要做什麼
             if status == 0:
                 # 原本要做的事
-                print("[TIMER] status 0: call ring manager")
+                print("[TIMER] status 0: call ring manager and start detection")
+                
                 self.ring_manager.ring(600)
 
                 # 只有主事件才從 JSON 移除鬧鐘
@@ -106,7 +110,7 @@ class TimerThread(threading.Thread):
             elif status == 1:
                 # 之後要寫的「前 60 秒」的處理
                 print("[TIMER] status 1: do pre-action")
-                self.pre_action(next_ts)
+                self.dect_start.set()
 
             else:
                 print(f"[TIMER] unknown status={status}, skip")

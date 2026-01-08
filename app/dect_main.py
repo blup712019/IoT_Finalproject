@@ -3,7 +3,7 @@ import threading
 import queue
 
 from app.carrrrrrr import CarMotor
-from app.hailo.basic_pipelines.dect import run_with_usb, user_app_callback_class
+from app.hailo.basic_pipelines.dect import run_with_usb, user_app_callback_class, run_with_usb_interruptible
 
 user_data = user_app_callback_class()
 stop_event = threading.Event()
@@ -124,7 +124,7 @@ def control_loop():
                 # motor.set_speed(left_speed, right_speed)
 
             except queue.Empty:
-                pass
+                continue
     finally:
         print("Control loop exit")
 
@@ -137,6 +137,8 @@ def keyboard_loop():
             stop_event.set()
             break
 
+
+stop_dect_event = threading.Event()
 
 def main():
     """給外部 import 用的進入點，也給這個檔案自己跑用"""

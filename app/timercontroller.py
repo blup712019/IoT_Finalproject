@@ -1,10 +1,10 @@
 import threading
 
 class TimerController:
-    def __init__(self, timer_thread_cls, ring_manager):
+    def __init__(self, timer_thread_cls, dect_stop: threading.Event, ring_manager):
         self._timer_thread_cls = timer_thread_cls
         self._ring_manager = ring_manager
-
+        self._dect_stop = dect_stop
         self._lock = threading.Lock()
         self._thread = None
         self._stop_event = None
@@ -15,7 +15,7 @@ class TimerController:
                 return
 
             self._stop_event = threading.Event()
-            self._thread = self._timer_thread_cls(self._stop_event, self._ring_manager)
+            self._thread = self._timer_thread_cls(self._stop_event, self._dect_stop, self._ring_manager)
             self._thread.start()
             print("[TIMER_CTRL] started")
 
@@ -41,6 +41,6 @@ class TimerController:
                 self._thread.join(timeout=3)
 
             self._stop_event = threading.Event()
-            self._thread = self._timer_thread_cls(self._stop_event, self._ring_manager)
+            self._thread = self._timer_thread_cls(self._stop_event, self._dect_stop, self._ring_manager)
             self._thread.start()
             print("[TIMER_CTRL] restarted")
