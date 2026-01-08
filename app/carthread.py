@@ -34,7 +34,7 @@ class CarThread(threading.Thread):
                         self.errorCount += 1
                         #print(f"no person! errorCount: {self.errorCount}")
 
-                        if self.errorCount < 114:
+                        if self.errorCount < 200:
                             continue
 
                         self.waitCount -= 1
@@ -51,9 +51,9 @@ class CarThread(threading.Thread):
                         self.rotateDegree += self.rotateDir
 
                         if self.rotateDir == 1:
-                            self.car.rotateLeft(0.10)
+                            self.car.rotateLeft(0.075)
                         else:
-                            self.car.rotateRight(0.10)
+                            self.car.rotateRight(0.075)
 
                         continue
                     # 1) 信心度過濾

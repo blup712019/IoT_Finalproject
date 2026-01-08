@@ -23,7 +23,7 @@ from app.ringmanager import RingManager
 from app.buttonthread import ButtonThread
 
 
-from app.hailo.basic_pipelines.dect import run_with_usb, user_app_callback_class, run_with_usb_interruptible
+from app.hailo.basic_pipelines.dect import user_app_callback_class, run_with_usb_interruptible
 
 BUZZER_FREQ = 2000  # Hz
 buzzer.BUZZER_FREQ = 2000
