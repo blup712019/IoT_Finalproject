@@ -84,7 +84,7 @@ st = SoundText(
     hotword="hello",
     google_lang="zh-TW",
     phrase_time_limit=None,  # 用靜音判斷段落結束（像 Google 輸入）
-    input_device_index=0,  # 若抓錯麥克風，可指定
+    input_device_index=1,  # 若抓錯麥克風，可指定
 )
 #threads
 global_stop = threading.Event()
@@ -132,7 +132,6 @@ def main():
             print('[MAIN]---------------waiting for timer-------------')
             dect_start.wait()
             # wake up
-            dect_start.clear()
             if main_stop.is_set() :
                 break
             dect_stop.clear()
@@ -143,6 +142,7 @@ def main():
             # run until dect_stop.is_set()
             run_with_usb_interruptible(user_data = dect_data, stop_event = dect_stop)
             print('[MAIN]---------------stop detection----------------')
+            dect_start.clear()
             car_stop.set()
         except KeyboardInterrupt:
             print("[MAIN] END")
@@ -150,6 +150,7 @@ def main():
         except SystemExit as e:
             print('[MAIN] thread exit(0)')
             car_stop.set()
+            dect_start.clear()
             print('[MAIN]---------------stop detection----------------')
     GPIOcleanup()
     car_stop.set()

@@ -10,7 +10,7 @@ class CarThread(threading.Thread):
         self.stop_event = stop_event
 
         # ===== 參數設定 =====
-        self.HORIZ_TH = 0.10
+        self.HORIZ_TH = 0.20
         self.W_LARGE  = 0.50
         self.W_SMALL  = 0.20
         self.CONF_TH  = 0.5
@@ -68,6 +68,8 @@ class CarThread(threading.Thread):
     
                     # ===== 左右軸判斷 =====
                     offset_x = cx - 0.5
+                    self.rotateDegree = 0
+                    self.rotationDir = offset_x // abs(offset_x)
                     if offset_x > self.HORIZ_TH:
                         lr = "right"      # 人在畫面偏右
                         lr_action = 1  # 機器人要「向右」轉

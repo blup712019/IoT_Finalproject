@@ -102,6 +102,7 @@ class TimerThread(threading.Thread):
                 # 原本要做的事
                 print("[TIMER] status 0: call ring manager and start detection")
                 
+                self.dect_start.set()
                 self.ring_manager.ring(600)
 
                 # 只有主事件才從 JSON 移除鬧鐘
